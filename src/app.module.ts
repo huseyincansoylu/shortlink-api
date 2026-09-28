@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env.validation.js';
 import { RedirectModule } from './redirect/redirect.module.js';
 import { UsersModule } from './users/users.module.js';
+import { AuthModule } from './auth/auth.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UsersModule } from './users/users.module.js';
     LinksModule,
     StatsModule,
     UsersModule,
+    AuthModule,
     RedirectModule,
   ],
   controllers: [AppController],

@@ -24,6 +24,10 @@ class EnvironmentVariables {
   @IsString()
   @Matches(/^postgres(ql)?:\/\//)
   DATABASE_URL!: string;
+
+  @IsString()
+  @MinLength(32)
+  JWT_SECRET!: string;
 }
 
 export function validateEnv(

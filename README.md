@@ -13,6 +13,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 - **Consistent writes.** A click is recorded and `lastClickedAt` is updated in one transaction ([ADR 0002](docs/adr/0002-atomic-click-recording.md)).
 - **Measured performance.** A foreign key index made selective lookups about 50× faster ([ADR 0003](docs/adr/0003-index-clicks-link-id.md)). Keyset pagination costs the same on any page, 0.035 ms compared with 40.69 ms for a deep `OFFSET` ([ADR 0004](docs/adr/0004-cursor-pagination.md)).
 - **No N+1 queries.** Link listings load click counts in a single aggregated query.
+- **Safe password storage.** Passwords are hashed with Argon2id, and the hash never leaves the users service. A duplicate email returns `409 Conflict` instead of a database error.
 - **Fail-fast configuration.** Environment variables are validated at startup with `class-validator`.
 - **Uniform API.** Every success response is wrapped in `{ data }`, and every error has the same shape with `statusCode`, `message`, `path` and `timestamp`.
 
@@ -24,7 +25,8 @@ flowchart LR
     Guard --> Pipes[ValidationPipe<br/>+ param pipes]
     Pipes --> Controllers
     subgraph Modules
-        Controllers[Links / Stats / Redirect<br/>controllers] --> LinksService
+        Controllers[Links / Stats / Redirect / Auth<br/>controllers] --> LinksService
+        Controllers --> AuthService --> UsersService --> PrismaService
         StatsService --> LinksService
         LinksService --> PrismaService
     end
@@ -49,19 +51,26 @@ erDiagram
         int linkId FK "indexed, ON DELETE CASCADE"
         timestamptz createdAt
     }
+    USER {
+        int id PK
+        string email UK
+        string passwordHash "Argon2id"
+        timestamptz createdAt
+    }
 ```
 
 ## API
 
-| Method   | Path                  | Auth        | Description                                              |
-| -------- | --------------------- | ----------- | -------------------------------------------------------- |
-| `POST`   | `/links`              | public      | Create a short link. Body: `{ "url": "https://..." }`    |
-| `GET`    | `/links?limit=10`     | public      | List links with their click counts (`limit` 1–100)       |
-| `GET`    | `/links/:code`        | public      | Link details with click count                            |
-| `GET`    | `/links/:code/clicks` | public      | Click history with cursor pagination (`limit`, `cursor`) |
-| `DELETE` | `/links/:code`        | `x-api-key` | Delete a link and its clicks (204)                       |
-| `GET`    | `/stats`              | public      | Summary statistics                                       |
-| `GET`    | `/:code`              | public      | Redirect (302) to the original URL and record the click  |
+| Method   | Path                  | Auth        | Description                                                    |
+| -------- | --------------------- | ----------- | -------------------------------------------------------------- |
+| `POST`   | `/links`              | public      | Create a short link. Body: `{ "url": "https://..." }`          |
+| `GET`    | `/links?limit=10`     | public      | List links with their click counts (`limit` 1–100)             |
+| `GET`    | `/links/:code`        | public      | Link details with click count                                  |
+| `GET`    | `/links/:code/clicks` | public      | Click history with cursor pagination (`limit`, `cursor`)       |
+| `DELETE` | `/links/:code`        | `x-api-key` | Delete a link and its clicks (204)                             |
+| `GET`    | `/stats`              | public      | Summary statistics                                             |
+| `POST`   | `/auth/register`      | public      | Register a user. Body: `{ "email", "password" }` (8–128 chars) |
+| `GET`    | `/:code`              | public      | Redirect (302) to the original URL and record the click        |
 
 Example:
 
@@ -82,7 +91,7 @@ Requirements: Node.js 22 or newer, and Docker.
 
 ```bash
 npm install
-cp .env.example .env          # then set API_KEY (at least 8 characters)
+cp .env.example .env          # then set API_KEY (8+ chars) and JWT_SECRET (32+ chars)
 docker compose up -d          # PostgreSQL on localhost:5433
 npx prisma migrate deploy
 npm run db:generate
@@ -108,6 +117,8 @@ src/
 ├── config/         # environment validation
 ├── prisma/         # PrismaService (connection lifecycle)
 ├── links/          # links domain: controller, service, DTOs
+├── users/          # user persistence and password hashing
+├── auth/           # registration endpoint
 ├── stats/          # statistics
 ├── redirect/       # GET /:code (registered last, because it is a catch-all route)
 └── main.ts
