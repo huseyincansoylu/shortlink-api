@@ -4,6 +4,7 @@ import { verify } from 'argon2';
 import { PublicUser, UsersService } from '../users/users.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import type { AuthUser } from './auth-user.js';
+import { PASSWORD_MAX_LENGTH } from './auth.constants.js';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +21,10 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<PublicUser | null> {
+    if (password.length > PASSWORD_MAX_LENGTH) {
+      return null;
+    }
+
     const user = await this.users.findByEmail(email);
 
     if (!user || !(await verify(user.passwordHash, password))) {
