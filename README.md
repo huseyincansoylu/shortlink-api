@@ -117,17 +117,6 @@ prisma/
 docs/adr/           # architecture decision records
 ```
 
-## Roadmap
-
-- [ ] User accounts with Argon2id password hashing
-- [ ] JWT authentication with refresh token rotation, and role-based access control
-- [ ] Rate limiting and security headers
-- [ ] Integration tests with Testcontainers
-- [ ] Redis caching for redirects
-- [ ] Asynchronous click ingestion with BullMQ
-- [ ] Structured logging (Pino) and OpenTelemetry tracing
-- [ ] Container image, health checks and graceful shutdown
-
 ## License
 
 [MIT](LICENSE)
