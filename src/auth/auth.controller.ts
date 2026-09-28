@@ -1,4 +1,13 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import type { PublicUser } from '../users/users.service.js';
 import { AuthService } from './auth.service.js';
@@ -12,5 +21,13 @@ export class AuthController {
   @Post('register')
   register(@Body() dto: RegisterDto): Promise<PublicUser> {
     return this.auth.register(dto);
+  }
+
+  @Public()
+  @UseGuards(AuthGuard('local'))
+  @HttpCode(HttpStatus.OK)
+  @Post('login')
+  login(@CurrentUser() user: PublicUser): Promise<{ accessToken: string }> {
+    return this.auth.login(user);
   }
 }

@@ -9,6 +9,10 @@ export type PublicUser = Omit<User, 'passwordHash'>;
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  findByEmail(email: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
+
   async create(email: string, password: string): Promise<PublicUser> {
     const passwordHash = await hash(password);
 
