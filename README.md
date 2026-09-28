@@ -1,5 +1,7 @@
 # shortlink
 
+[![CI](https://github.com/huseyincansoylu/shortlink-api/actions/workflows/ci.yml/badge.svg)](https://github.com/huseyincansoylu/shortlink-api/actions/workflows/ci.yml)
+
 A URL shortener API with click analytics, built with **NestJS 12**, **Prisma 7** and **PostgreSQL**.
 
 Beyond a basic link shortener, the project focuses on backend fundamentals: a layered module architecture, secure-by-default access control, transactional writes, and database access patterns that were measured with `EXPLAIN ANALYZE`.
