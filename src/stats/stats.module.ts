@@ -1,0 +1,11 @@
+import { Module } from '@nestjs/common';
+import { StatsService } from './stats.service.js';
+import { LinksModule } from '../links/links.module.js';
+import { StatsController } from './stats.controller.js';
+
+@Module({
+  imports: [LinksModule],
+  providers: [StatsService],
+  controllers: [StatsController],
+})
+export class StatsModule {}

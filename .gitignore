@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+src/generated
+
+.env
+.env.*
+!.env.example
+
+*.tsbuildinfo
+*.log
+.DS_Store
+
+ROADMAP.md
+CLAUDE.md

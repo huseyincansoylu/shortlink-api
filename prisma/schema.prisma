@@ -1,0 +1,42 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  @@map("users")
+}
+
+model Link {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  url         String
+  createdByIp String
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  lastClickedAt DateTime? @db.Timestamptz(3)
+  clicks      Click[]
+
+  @@map("links")
+}
+
+model Click {
+  id        Int      @id @default(autoincrement())
+  linkId    Int
+  link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@map("clicks")
+
+  @@index([linkId])
+}
