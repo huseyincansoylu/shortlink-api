@@ -18,10 +18,6 @@ class EnvironmentVariables {
   PORT?: number;
 
   @IsString()
-  @MinLength(8)
-  API_KEY!: string;
-
-  @IsString()
   @Matches(/^postgres(ql)?:\/\//)
   DATABASE_URL!: string;
 

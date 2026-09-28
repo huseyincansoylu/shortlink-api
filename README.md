@@ -9,7 +9,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 ## Highlights
 
 - **Layered architecture.** Controllers only handle HTTP. Business rules live in services, and persistence goes through a single `PrismaService`.
-- **Secure by default.** A global guard protects every route, and public endpoints must opt out explicitly with `@Public()` ([ADR 0001](docs/adr/0001-secure-by-default-global-guard.md)).
+- **Secure by default.** A global JWT guard protects every route, and public endpoints must opt out explicitly with `@Public()` ([ADR 0001](docs/adr/0001-secure-by-default-global-guard.md), [ADR 0005](docs/adr/0005-jwt-global-guard.md)).
 - **Consistent writes.** A click is recorded and `lastClickedAt` is updated in one transaction ([ADR 0002](docs/adr/0002-atomic-click-recording.md)).
 - **Measured performance.** A foreign key index made selective lookups about 50× faster ([ADR 0003](docs/adr/0003-index-clicks-link-id.md)). Keyset pagination costs the same on any page, 0.035 ms compared with 40.69 ms for a deep `OFFSET` ([ADR 0004](docs/adr/0004-cursor-pagination.md)).
 - **No N+1 queries.** Link listings load click counts in a single aggregated query.
@@ -21,7 +21,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 
 ```mermaid
 flowchart LR
-    Client -->|HTTP| Guard[ApiKeyGuard<br/>global]
+    Client -->|HTTP| Guard[JwtAuthGuard<br/>global]
     Guard --> Pipes[ValidationPipe<br/>+ param pipes]
     Pipes --> Controllers
     subgraph Modules
@@ -61,17 +61,18 @@ erDiagram
 
 ## API
 
-| Method   | Path                  | Auth        | Description                                                                 |
-| -------- | --------------------- | ----------- | --------------------------------------------------------------------------- |
-| `POST`   | `/links`              | public      | Create a short link. Body: `{ "url": "https://..." }`                       |
-| `GET`    | `/links?limit=10`     | public      | List links with their click counts (`limit` 1–100)                          |
-| `GET`    | `/links/:code`        | public      | Link details with click count                                               |
-| `GET`    | `/links/:code/clicks` | public      | Click history with cursor pagination (`limit`, `cursor`)                    |
-| `DELETE` | `/links/:code`        | `x-api-key` | Delete a link and its clicks (204)                                          |
-| `GET`    | `/stats`              | public      | Summary statistics                                                          |
-| `POST`   | `/auth/register`      | public      | Register a user. Body: `{ "email", "password" }` (8–128 chars)              |
-| `POST`   | `/auth/login`         | public      | Log in with `{ "email", "password" }`. Returns a JWT `accessToken` (15 min) |
-| `GET`    | `/:code`              | public      | Redirect (302) to the original URL and record the click                     |
+| Method   | Path                  | Auth       | Description                                                                 |
+| -------- | --------------------- | ---------- | --------------------------------------------------------------------------- |
+| `POST`   | `/links`              | public     | Create a short link. Body: `{ "url": "https://..." }`                       |
+| `GET`    | `/links?limit=10`     | public     | List links with their click counts (`limit` 1–100)                          |
+| `GET`    | `/links/:code`        | public     | Link details with click count                                               |
+| `GET`    | `/links/:code/clicks` | public     | Click history with cursor pagination (`limit`, `cursor`)                    |
+| `DELETE` | `/links/:code`        | Bearer JWT | Delete a link and its clicks (204)                                          |
+| `GET`    | `/stats`              | public     | Summary statistics                                                          |
+| `POST`   | `/auth/register`      | public     | Register a user. Body: `{ "email", "password" }` (8–128 chars)              |
+| `POST`   | `/auth/login`         | public     | Log in with `{ "email", "password" }`. Returns a JWT `accessToken` (15 min) |
+| `GET`    | `/auth/me`            | Bearer JWT | The authenticated user (`id`, `email`)                                      |
+| `GET`    | `/:code`              | public     | Redirect (302) to the original URL and record the click                     |
 
 Example:
 
@@ -92,7 +93,7 @@ Requirements: Node.js 22 or newer, and Docker.
 
 ```bash
 npm install
-cp .env.example .env          # then set API_KEY (8+ chars) and JWT_SECRET (32+ chars)
+cp .env.example .env          # then set JWT_SECRET (32+ chars)
 docker compose up -d          # PostgreSQL on localhost:5433
 npx prisma migrate deploy
 npm run db:generate
@@ -119,7 +120,7 @@ src/
 ├── prisma/         # PrismaService (connection lifecycle)
 ├── links/          # links domain: controller, service, DTOs
 ├── users/          # user persistence and password hashing
-├── auth/           # registration, login (Passport local strategy), JWT issuing
+├── auth/           # registration, login, JWT strategy and the global JwtAuthGuard
 ├── stats/          # statistics
 ├── redirect/       # GET /:code (registered last, because it is a catch-all route)
 └── main.ts

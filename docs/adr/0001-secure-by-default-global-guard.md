@@ -1,6 +1,6 @@
 # 0001. Secure by default: global guard with opt-in public routes
 
-- Status: Accepted
+- Status: Accepted, authentication mechanism superseded by [ADR 0005](0005-jwt-global-guard.md)
 - Date: 2026-09-26
 
 ## Context

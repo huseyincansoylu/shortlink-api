@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -12,6 +13,7 @@ import { Public } from '../common/decorators/public.decorator.js';
 import type { PublicUser } from '../users/users.service.js';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
+import type { AuthUser } from './auth-user.js';
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +29,12 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@CurrentUser() user: PublicUser): Promise<{ accessToken: string }> {
+  login(@CurrentUser() user: AuthUser): Promise<{ accessToken: string }> {
     return this.auth.login(user);
+  }
+
+  @Get('me')
+  me(@CurrentUser() user: AuthUser): AuthUser {
+    return user;
   }
 }

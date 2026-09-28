@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { verify } from 'argon2';
 import { PublicUser, UsersService } from '../users/users.service.js';
 import { RegisterDto } from './dto/register.dto.js';
+import type { AuthUser } from './auth-user.js';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,7 @@ export class AuthService {
     return publicUser;
   }
 
-  async login(user: PublicUser): Promise<{ accessToken: string }> {
+  async login(user: AuthUser): Promise<{ accessToken: string }> {
     const accessToken = await this.jwt.signAsync({
       sub: user.id,
       email: user.email,
