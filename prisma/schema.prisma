@@ -10,10 +10,11 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  passwordHash  String
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+  refreshTokens RefreshToken[]
 
   @@map("users")
 }
@@ -39,4 +40,17 @@ model Click {
   @@map("clicks")
 
   @@index([linkId])
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@map("refresh_tokens")
+  @@index([userId])
 }

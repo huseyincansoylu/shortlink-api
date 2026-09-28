@@ -14,6 +14,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 - **Measured performance.** A foreign key index made selective lookups about 50× faster ([ADR 0003](docs/adr/0003-index-clicks-link-id.md)). Keyset pagination costs the same on any page, 0.035 ms compared with 40.69 ms for a deep `OFFSET` ([ADR 0004](docs/adr/0004-cursor-pagination.md)).
 - **No N+1 queries.** Link listings load click counts in a single aggregated query.
 - **Safe password storage.** Passwords are hashed with Argon2id, and the hash never leaves the users service. A duplicate email returns `409 Conflict` instead of a database error, and a failed login returns the same `401` whether the email is unknown or the password is wrong, so the response does not reveal which accounts exist.
+- **Revocable sessions.** Short-lived JWT access tokens are paired with opaque refresh tokens that are stored hashed, rotated on every use, and revoked for the whole account when reuse is detected. Concurrent refreshes of the same token are serialized, so only one succeeds ([ADR 0006](docs/adr/0006-refresh-token-rotation.md)).
 - **Fail-fast configuration.** Environment variables are validated at startup with `class-validator`.
 - **Uniform API.** Every success response is wrapped in `{ data }`, and every error has the same shape with `statusCode`, `message`, `path` and `timestamp`.
 
@@ -38,6 +39,7 @@ flowchart LR
 ```mermaid
 erDiagram
     LINK ||--o{ CLICK : has
+    USER ||--o{ REFRESH_TOKEN : has
     LINK {
         int id PK
         string code UK
@@ -57,22 +59,32 @@ erDiagram
         string passwordHash "Argon2id"
         timestamptz createdAt
     }
+    REFRESH_TOKEN {
+        int id PK
+        int userId FK "indexed, ON DELETE CASCADE"
+        string tokenHash UK "SHA-256"
+        timestamptz expiresAt
+        timestamptz revokedAt "null while active"
+        timestamptz createdAt
+    }
 ```
 
 ## API
 
-| Method   | Path                  | Auth       | Description                                                                 |
-| -------- | --------------------- | ---------- | --------------------------------------------------------------------------- |
-| `POST`   | `/links`              | public     | Create a short link. Body: `{ "url": "https://..." }`                       |
-| `GET`    | `/links?limit=10`     | public     | List links with their click counts (`limit` 1–100)                          |
-| `GET`    | `/links/:code`        | public     | Link details with click count                                               |
-| `GET`    | `/links/:code/clicks` | public     | Click history with cursor pagination (`limit`, `cursor`)                    |
-| `DELETE` | `/links/:code`        | Bearer JWT | Delete a link and its clicks (204)                                          |
-| `GET`    | `/stats`              | public     | Summary statistics                                                          |
-| `POST`   | `/auth/register`      | public     | Register a user. Body: `{ "email", "password" }` (8–128 chars)              |
-| `POST`   | `/auth/login`         | public     | Log in with `{ "email", "password" }`. Returns a JWT `accessToken` (15 min) |
-| `GET`    | `/auth/me`            | Bearer JWT | The authenticated user (`id`, `email`)                                      |
-| `GET`    | `/:code`              | public     | Redirect (302) to the original URL and record the click                     |
+| Method   | Path                  | Auth       | Description                                                                                            |
+| -------- | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `POST`   | `/links`              | public     | Create a short link. Body: `{ "url": "https://..." }`                                                  |
+| `GET`    | `/links?limit=10`     | public     | List links with their click counts (`limit` 1–100)                                                     |
+| `GET`    | `/links/:code`        | public     | Link details with click count                                                                          |
+| `GET`    | `/links/:code/clicks` | public     | Click history with cursor pagination (`limit`, `cursor`)                                               |
+| `DELETE` | `/links/:code`        | Bearer JWT | Delete a link and its clicks (204)                                                                     |
+| `GET`    | `/stats`              | public     | Summary statistics                                                                                     |
+| `POST`   | `/auth/register`      | public     | Register a user. Body: `{ "email", "password" }` (8–128 chars)                                         |
+| `POST`   | `/auth/login`         | public     | Log in with `{ "email", "password" }`. Returns `accessToken` (JWT, 15 min) and `refreshToken` (7 days) |
+| `POST`   | `/auth/refresh`       | public     | Exchange `{ "refreshToken" }` for a new token pair. The old refresh token is revoked                   |
+| `POST`   | `/auth/logout`        | public     | Revoke `{ "refreshToken" }` (204)                                                                      |
+| `GET`    | `/auth/me`            | Bearer JWT | The authenticated user (`id`, `email`)                                                                 |
+| `GET`    | `/:code`              | public     | Redirect (302) to the original URL and record the click                                                |
 
 Example:
 
@@ -120,7 +132,7 @@ src/
 ├── prisma/         # PrismaService (connection lifecycle)
 ├── links/          # links domain: controller, service, DTOs
 ├── users/          # user persistence and password hashing
-├── auth/           # registration, login, JWT strategy and the global JwtAuthGuard
+├── auth/           # registration, login, refresh token rotation, JWT strategy, global JwtAuthGuard
 ├── stats/          # statistics
 ├── redirect/       # GET /:code (registered last, because it is a catch-all route)
 └── main.ts

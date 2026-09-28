@@ -9,3 +9,4 @@ Short records of the decisions that shaped shortlink. Each one explains the cont
 | 0003 | [Index the `clicks.linkId` foreign key](0003-index-clicks-link-id.md)                               | Accepted                               |
 | 0004 | [Keyset (cursor) pagination for click history](0004-cursor-pagination.md)                           | Accepted                               |
 | 0005 | [Replace the shared API key with a global JWT guard](0005-jwt-global-guard.md)                      | Accepted                               |
+| 0006 | [Opaque refresh tokens with rotation and reuse detection](0006-refresh-token-rotation.md)           | Accepted                               |
