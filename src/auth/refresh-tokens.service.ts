@@ -69,7 +69,7 @@ export class RefreshTokensService {
   ) {
     return db.refreshToken.findUnique({
       where: { tokenHash: this.hash(token) },
-      include: { user: { select: { id: true, email: true } } },
+      include: { user: { select: { id: true, email: true, role: true } } },
     });
   }
 

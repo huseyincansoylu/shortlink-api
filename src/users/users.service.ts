@@ -13,6 +13,13 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
+  findById(id: number): Promise<PublicUser | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      omit: { passwordHash: true },
+    });
+  }
+
   async create(email: string, password: string): Promise<PublicUser> {
     const passwordHash = await hash(password);
 

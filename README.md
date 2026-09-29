@@ -9,7 +9,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 ## Highlights
 
 - **Layered architecture.** Controllers only handle HTTP. Business rules live in services, and persistence goes through a single `PrismaService`.
-- **Secure by default.** A global JWT guard protects every route, and public endpoints must opt out explicitly with `@Public()` ([ADR 0001](docs/adr/0001-secure-by-default-global-guard.md), [ADR 0005](docs/adr/0005-jwt-global-guard.md)).
+- **Secure by default.** A global JWT guard protects every route, and public endpoints must opt out explicitly with `@Public()` ([ADR 0001](docs/adr/0001-secure-by-default-global-guard.md), [ADR 0005](docs/adr/0005-jwt-global-guard.md)). The user and their role are loaded on every authenticated request, so a role change or a deleted account takes effect immediately ([ADR 0008](docs/adr/0008-load-user-on-each-request.md)).
 - **Consistent writes.** A click is recorded and `lastClickedAt` is updated in one transaction ([ADR 0002](docs/adr/0002-atomic-click-recording.md)).
 - **Measured performance.** A foreign key index made selective lookups about 50× faster ([ADR 0003](docs/adr/0003-index-clicks-link-id.md)). Keyset pagination costs the same on any page, 0.035 ms compared with 40.69 ms for a deep `OFFSET` ([ADR 0004](docs/adr/0004-cursor-pagination.md)).
 - **No N+1 queries.** Link listings load click counts in a single aggregated query.
@@ -60,6 +60,7 @@ erDiagram
         int id PK
         string email UK
         string passwordHash "Argon2id"
+        enum role "USER or ADMIN"
         timestamptz createdAt
     }
     REFRESH_TOKEN {
@@ -86,7 +87,7 @@ erDiagram
 | `POST`   | `/auth/login`         | public     | Log in with `{ "email", "password" }`. Returns `accessToken` (JWT, 15 min) and `refreshToken` (7 days) |
 | `POST`   | `/auth/refresh`       | public     | Exchange `{ "refreshToken" }` for a new token pair. The old refresh token is revoked                   |
 | `POST`   | `/auth/logout`        | public     | Revoke `{ "refreshToken" }` (204)                                                                      |
-| `GET`    | `/auth/me`            | Bearer JWT | The authenticated user (`id`, `email`)                                                                 |
+| `GET`    | `/auth/me`            | Bearer JWT | The authenticated user (`id`, `email`, `role`)                                                         |
 | `GET`    | `/:code`              | public     | Redirect (302) to the original URL and record the click                                                |
 
 Example:

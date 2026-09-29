@@ -1,6 +1,6 @@
 # 0005. Replace the shared API key with a global JWT guard
 
-- Status: Accepted
+- Status: Accepted, stateless token check superseded by [ADR 0008](0008-load-user-on-each-request.md)
 - Date: 2026-09-28
 - Supersedes the authentication mechanism of [ADR 0001](0001-secure-by-default-global-guard.md)
 

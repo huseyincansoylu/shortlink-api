@@ -9,10 +9,16 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id            Int            @id @default(autoincrement())
   email         String         @unique
   passwordHash  String
+  role          Role           @default(USER)
   createdAt     DateTime       @default(now()) @db.Timestamptz(3)
   refreshTokens RefreshToken[]
   links         Link[]
