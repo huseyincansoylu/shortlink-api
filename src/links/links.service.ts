@@ -79,10 +79,10 @@ export class LinksService {
     await this.prisma.link.delete({ where: { id: link.id } });
   }
 
-  create(url: string, ip: string): Promise<Link> {
+  create(url: string, userId: number, ip: string): Promise<Link> {
     const code = Math.random().toString(36).slice(2, 8);
     return this.prisma.link.create({
-      data: { code, url, createdByIp: ip },
+      data: { code, url, createdByIp: ip, userId },
     });
   }
 }

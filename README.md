@@ -40,6 +40,7 @@ flowchart LR
 erDiagram
     LINK ||--o{ CLICK : has
     USER ||--o{ REFRESH_TOKEN : has
+    USER ||--o{ LINK : owns
     LINK {
         int id PK
         string code UK
@@ -47,6 +48,7 @@ erDiagram
         string createdByIp
         timestamptz createdAt
         timestamptz lastClickedAt
+        int userId FK "indexed, ON DELETE CASCADE"
     }
     CLICK {
         int id PK
@@ -73,7 +75,7 @@ erDiagram
 
 | Method   | Path                  | Auth       | Description                                                                                            |
 | -------- | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
-| `POST`   | `/links`              | public     | Create a short link. Body: `{ "url": "https://..." }`                                                  |
+| `POST`   | `/links`              | Bearer JWT | Create a short link owned by the authenticated user. Body: `{ "url": "https://..." }`                  |
 | `GET`    | `/links?limit=10`     | public     | List links with their click counts (`limit` 1–100)                                                     |
 | `GET`    | `/links/:code`        | public     | Link details with click count                                                                          |
 | `GET`    | `/links/:code/clicks` | public     | Click history with cursor pagination (`limit`, `cursor`)                                               |
@@ -90,6 +92,7 @@ Example:
 
 ```bash
 curl -X POST localhost:3000/links \
+  -H "authorization: Bearer $ACCESS_TOKEN" \
   -H 'content-type: application/json' \
   -d '{"url":"https://nestjs.com"}'
 

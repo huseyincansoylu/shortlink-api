@@ -15,6 +15,7 @@ model User {
   passwordHash  String
   createdAt     DateTime       @default(now()) @db.Timestamptz(3)
   refreshTokens RefreshToken[]
+  links         Link[]
 
   @@map("users")
 }
@@ -26,9 +27,12 @@ model Link {
   createdByIp String
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
   lastClickedAt DateTime? @db.Timestamptz(3)
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   clicks      Click[]
 
   @@map("links")
+  @@index([userId])
 }
 
 model Click {

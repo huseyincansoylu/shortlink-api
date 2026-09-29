@@ -22,6 +22,8 @@ import { ParseLimitPipe } from '../common/pipes/parse-limit.pipe.js';
 
 import { Public } from '../common/decorators/public.decorator.js';
 import { ClientIp } from '../common/decorators/client-ip.decorator.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import type { AuthUser } from '../auth/auth-user.js';
 
 @Controller('links')
 export class LinksController {
@@ -60,9 +62,12 @@ export class LinksController {
     return this.linksService.remove(code);
   }
 
-  @Public()
   @Post()
-  create(@Body() dto: CreateLinkDto, @ClientIp() ip: string): Promise<Link> {
-    return this.linksService.create(dto.url, ip);
+  create(
+    @Body() dto: CreateLinkDto,
+    @CurrentUser() user: AuthUser,
+    @ClientIp() ip: string,
+  ): Promise<Link> {
+    return this.linksService.create(dto.url, user.id, ip);
   }
 }
