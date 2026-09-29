@@ -1,5 +1,6 @@
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Transform } from 'class-transformer';
 import {
+  IsArray,
   IsInt,
   IsOptional,
   IsString,
@@ -24,6 +25,19 @@ class EnvironmentVariables {
   @IsString()
   @MinLength(32)
   JWT_SECRET!: string;
+
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string'
+      ? value
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean)
+      : value,
+  )
+  @IsArray()
+  @Matches(/^https?:\/\/[^/\s]+$/, { each: true })
+  CORS_ORIGINS?: string[];
 }
 
 export function validateEnv(

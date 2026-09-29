@@ -20,6 +20,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 - **Data minimization.** The creator's IP address is stored for abuse investigations but is never returned by the API, the same way password hashes are excluded at the query level.
 - **Rate limiting.** A global throttler allows 100 requests per minute per IP and route, 5 per minute on login and registration, and none on redirects. It runs before authentication, so rejected requests never reach the database or the password hash check ([ADR 0010](docs/adr/0010-rate-limiting.md)).
 - **Security headers.** `helmet` sets HSTS, `X-Content-Type-Options`, `X-Frame-Options` and a restrictive Content Security Policy on every response, and removes `X-Powered-By`.
+- **Restricted CORS.** Browsers may call the API only from the origins listed in `CORS_ORIGINS`. If the variable is missing, cross-origin requests are not allowed. Each origin is validated at startup, so a typo such as a trailing slash stops the application instead of silently disabling CORS.
 - **Fail-fast configuration.** Environment variables are validated at startup with `class-validator`.
 - **Uniform API.** Every success response is wrapped in `{ data }`, and every error has the same shape with `statusCode`, `message`, `path` and `timestamp`.
 
@@ -116,7 +117,7 @@ Requirements: Node.js 22 or newer, and Docker.
 
 ```bash
 npm install
-cp .env.example .env          # then set JWT_SECRET (32+ chars)
+cp .env.example .env          # then set JWT_SECRET (32+ chars) and CORS_ORIGINS
 docker compose up -d          # PostgreSQL on localhost:5433
 npx prisma migrate deploy
 npm run db:generate
