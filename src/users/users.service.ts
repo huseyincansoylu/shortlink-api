@@ -9,6 +9,13 @@ export type PublicUser = Omit<User, 'passwordHash'>;
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  findAll(): Promise<PublicUser[]> {
+    return this.prisma.user.findMany({
+      omit: { passwordHash: true },
+      orderBy: { id: 'asc' },
+    });
+  }
+
   findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }

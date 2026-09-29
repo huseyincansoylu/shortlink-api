@@ -62,7 +62,7 @@ export class LinksController {
     @Param('code') code: string,
     @CurrentUser() user: AuthUser,
   ): Promise<void> {
-    return this.linksService.remove(code, user.id);
+    return this.linksService.remove(code, user.id, user.role);
   }
 
   @Post()
