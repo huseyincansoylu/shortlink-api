@@ -28,6 +28,14 @@ export class LinksService {
     });
   }
 
+  findByOwner(userId: number): Promise<LinkWithClickCount[]> {
+    return this.prisma.link.findMany({
+      where: { userId },
+      omit: { createdByIp: true },
+      include: { _count: { select: { clicks: true } } },
+    });
+  }
+
   async findByCode(code: string): Promise<Link> {
     const link = await this.prisma.link.findUnique({ where: { code } });
 

@@ -38,6 +38,11 @@ export class LinksController {
     return this.linksService.findAll(limit);
   }
 
+  @Get('mine')
+  findMine(@CurrentUser() user: AuthUser): Promise<LinkWithClickCount[]> {
+    return this.linksService.findByOwner(user.id);
+  }
+
   @Public()
   @Get(':code')
   findOne(@Param('code') code: string): Promise<LinkWithClickCount> {

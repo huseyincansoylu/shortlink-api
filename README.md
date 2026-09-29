@@ -81,6 +81,7 @@ erDiagram
 | -------- | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
 | `POST`   | `/links`              | Bearer JWT | Create a short link owned by the authenticated user. Body: `{ "url": "https://..." }`                               |
 | `GET`    | `/links?limit=10`     | public     | List links with their click counts (`limit` 1–100)                                                                  |
+| `GET`    | `/links/mine`         | Bearer JWT | Links owned by the authenticated user, with click counts                                                            |
 | `GET`    | `/links/:code`        | public     | Link details with click count                                                                                       |
 | `GET`    | `/links/:code/clicks` | public     | Click history with cursor pagination (`limit`, `cursor`)                                                            |
 | `DELETE` | `/links/:code`        | Bearer JWT | Delete a link and its clicks (204). Owners can delete their own links and admins can delete any link. Otherwise 403 |
