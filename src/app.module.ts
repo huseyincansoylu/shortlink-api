@@ -5,6 +5,7 @@ import { AppService } from './app.service.js';
 import { LinksModule } from './links/links.module.js';
 import { StatsModule } from './stats/stats.module.js';
 import { ConfigModule } from '@nestjs/config';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from './config/env.validation.js';
 import { RedirectModule } from './redirect/redirect.module.js';
 import { UsersModule } from './users/users.module.js';
@@ -15,6 +16,10 @@ import { RolesGuard } from './auth/roles.guard.js';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: seconds(60), limit: 100 }],
+      errorMessage: 'Too many requests',
+    }),
     LinksModule,
     StatsModule,
     UsersModule,
@@ -24,6 +29,7 @@ import { RolesGuard } from './auth/roles.guard.js';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],

@@ -13,3 +13,4 @@ Short records of the decisions that shaped shortlink. Each one explains the cont
 | 0007 | [Links have an owner, and only the owner can delete them](0007-link-ownership.md)                   | Accepted                                 |
 | 0008 | [Load the user from the database on each authenticated request](0008-load-user-on-each-request.md)  | Accepted                                 |
 | 0009 | [Role checks in a global guard, ownership checks in the service](0009-role-based-access-control.md) | Accepted                                 |
+| 0010 | [Rate limiting with a global throttler guard](0010-rate-limiting.md)                                | Accepted                                 |

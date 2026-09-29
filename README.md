@@ -18,6 +18,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 - **Object-level authorization.** Every link belongs to the user who created it, and only that user or an admin can delete it. The owner comes from the JWT, never from the request body ([ADR 0007](docs/adr/0007-link-ownership.md)).
 - **Role-based access control.** Users are `USER` or `ADMIN`. Admin-only routes are marked with `@Roles('ADMIN')` and checked by a global `RolesGuard` that runs after authentication. Ownership rules that need the resource itself stay in the service ([ADR 0009](docs/adr/0009-role-based-access-control.md)).
 - **Data minimization.** The creator's IP address is stored for abuse investigations but is never returned by the API, the same way password hashes are excluded at the query level.
+- **Rate limiting.** A global throttler allows 100 requests per minute per IP and route, 5 per minute on login and registration, and none on redirects. It runs before authentication, so rejected requests never reach the database or the password hash check ([ADR 0010](docs/adr/0010-rate-limiting.md)).
 - **Fail-fast configuration.** Environment variables are validated at startup with `class-validator`.
 - **Uniform API.** Every success response is wrapped in `{ data }`, and every error has the same shape with `statusCode`, `message`, `path` and `timestamp`.
 
@@ -25,7 +26,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 
 ```mermaid
 flowchart LR
-    Client -->|HTTP| Guard[JwtAuthGuard<br/>+ RolesGuard<br/>global]
+    Client -->|HTTP| Guard[ThrottlerGuard<br/>+ JwtAuthGuard<br/>+ RolesGuard<br/>global]
     Guard --> Pipes[ValidationPipe<br/>+ param pipes]
     Pipes --> Controllers
     subgraph Modules
