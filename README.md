@@ -15,6 +15,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 - **No N+1 queries.** Link listings load click counts in a single aggregated query.
 - **Safe password storage.** Passwords are hashed with Argon2id, and the hash never leaves the users service. A duplicate email returns `409 Conflict` instead of a database error, and a failed login returns the same `401` whether the email is unknown or the password is wrong, so the response does not reveal which accounts exist.
 - **Revocable sessions.** Short-lived JWT access tokens are paired with opaque refresh tokens that are stored hashed, rotated on every use, and revoked for the whole account when reuse is detected. Concurrent refreshes of the same token are serialized, so only one succeeds ([ADR 0006](docs/adr/0006-refresh-token-rotation.md)).
+- **Object-level authorization.** Every link belongs to the user who created it, and only that user can delete it. The owner comes from the JWT, never from the request body ([ADR 0007](docs/adr/0007-link-ownership.md)).
 - **Fail-fast configuration.** Environment variables are validated at startup with `class-validator`.
 - **Uniform API.** Every success response is wrapped in `{ data }`, and every error has the same shape with `statusCode`, `message`, `path` and `timestamp`.
 
@@ -79,7 +80,7 @@ erDiagram
 | `GET`    | `/links?limit=10`     | public     | List links with their click counts (`limit` 1–100)                                                     |
 | `GET`    | `/links/:code`        | public     | Link details with click count                                                                          |
 | `GET`    | `/links/:code/clicks` | public     | Click history with cursor pagination (`limit`, `cursor`)                                               |
-| `DELETE` | `/links/:code`        | Bearer JWT | Delete a link and its clicks (204)                                                                     |
+| `DELETE` | `/links/:code`        | Bearer JWT | Delete your own link and its clicks (204). Another user's link returns 403                             |
 | `GET`    | `/stats`              | public     | Summary statistics                                                                                     |
 | `POST`   | `/auth/register`      | public     | Register a user. Body: `{ "email", "password" }` (8–128 chars)                                         |
 | `POST`   | `/auth/login`         | public     | Log in with `{ "email", "password" }`. Returns `accessToken` (JWT, 15 min) and `refreshToken` (7 days) |

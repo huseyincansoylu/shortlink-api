@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Click, Link } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -74,8 +78,11 @@ export class LinksService {
     return link.url;
   }
 
-  async remove(code: string): Promise<void> {
+  async remove(code: string, userId: number): Promise<void> {
     const link = await this.findByCode(code);
+    if (link.userId !== userId) {
+      throw new ForbiddenException(`You do not own link ${code}`);
+    }
     await this.prisma.link.delete({ where: { id: link.id } });
   }
 

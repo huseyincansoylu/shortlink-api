@@ -58,8 +58,11 @@ export class LinksController {
 
   @Delete(':code')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('code') code: string): Promise<void> {
-    return this.linksService.remove(code);
+  remove(
+    @Param('code') code: string,
+    @CurrentUser() user: AuthUser,
+  ): Promise<void> {
+    return this.linksService.remove(code, user.id);
   }
 
   @Post()
