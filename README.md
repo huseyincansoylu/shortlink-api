@@ -24,6 +24,8 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 - **Fail-fast configuration.** Environment variables are validated at startup with `class-validator`.
 - **Uniform API.** Every success response is wrapped in `{ data }`, and every error has the same shape with `statusCode`, `message`, `path` and `timestamp`.
 
+See the [security overview](docs/security.md) for how the API maps to the OWASP API Security Top 10.
+
 ## Architecture
 
 ```mermaid
