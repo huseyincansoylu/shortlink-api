@@ -6,7 +6,9 @@ import {
 import type { Click, Link, Role } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
-export type LinkWithClickCount = Link & { _count: { clicks: number } };
+export type PublicLink = Omit<Link, 'createdByIp'>;
+
+export type LinkWithClickCount = PublicLink & { _count: { clicks: number } };
 
 export type ClickPage = { items: Click[]; nextCursor: number | null };
 
@@ -21,6 +23,7 @@ export class LinksService {
   findAll(limit: number): Promise<LinkWithClickCount[]> {
     return this.prisma.link.findMany({
       take: limit,
+      omit: { createdByIp: true },
       include: { _count: { select: { clicks: true } } },
     });
   }
@@ -37,6 +40,7 @@ export class LinksService {
   async findDetails(code: string): Promise<LinkWithClickCount> {
     const link = await this.prisma.link.findUnique({
       where: { code },
+      omit: { createdByIp: true },
       include: { _count: { select: { clicks: true } } },
     });
 
@@ -86,10 +90,11 @@ export class LinksService {
     await this.prisma.link.delete({ where: { id: link.id } });
   }
 
-  create(url: string, userId: number, ip: string): Promise<Link> {
+  create(url: string, userId: number, ip: string): Promise<PublicLink> {
     const code = Math.random().toString(36).slice(2, 8);
     return this.prisma.link.create({
       data: { code, url, createdByIp: ip, userId },
+      omit: { createdByIp: true },
     });
   }
 }

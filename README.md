@@ -17,6 +17,7 @@ Beyond a basic link shortener, the project focuses on backend fundamentals: a la
 - **Revocable sessions.** Short-lived JWT access tokens are paired with opaque refresh tokens that are stored hashed, rotated on every use, and revoked for the whole account when reuse is detected. Concurrent refreshes of the same token are serialized, so only one succeeds ([ADR 0006](docs/adr/0006-refresh-token-rotation.md)).
 - **Object-level authorization.** Every link belongs to the user who created it, and only that user or an admin can delete it. The owner comes from the JWT, never from the request body ([ADR 0007](docs/adr/0007-link-ownership.md)).
 - **Role-based access control.** Users are `USER` or `ADMIN`. Admin-only routes are marked with `@Roles('ADMIN')` and checked by a global `RolesGuard` that runs after authentication. Ownership rules that need the resource itself stay in the service ([ADR 0009](docs/adr/0009-role-based-access-control.md)).
+- **Data minimization.** The creator's IP address is stored for abuse investigations but is never returned by the API, the same way password hashes are excluded at the query level.
 - **Fail-fast configuration.** Environment variables are validated at startup with `class-validator`.
 - **Uniform API.** Every success response is wrapped in `{ data }`, and every error has the same shape with `statusCode`, `message`, `path` and `timestamp`.
 

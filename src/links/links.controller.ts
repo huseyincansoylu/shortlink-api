@@ -15,9 +15,9 @@ import {
   LinksService,
   type ClickPage,
   type LinkWithClickCount,
+  type PublicLink,
 } from './links.service.js';
 import { CreateLinkDto } from './dto/create-link.dto.js';
-import type { Link } from '../generated/prisma/client.js';
 import { ParseLimitPipe } from '../common/pipes/parse-limit.pipe.js';
 
 import { Public } from '../common/decorators/public.decorator.js';
@@ -34,7 +34,7 @@ export class LinksController {
   findAll(
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe, ParseLimitPipe)
     limit: number,
-  ): Promise<Link[]> {
+  ): Promise<LinkWithClickCount[]> {
     return this.linksService.findAll(limit);
   }
 
@@ -70,7 +70,7 @@ export class LinksController {
     @Body() dto: CreateLinkDto,
     @CurrentUser() user: AuthUser,
     @ClientIp() ip: string,
-  ): Promise<Link> {
+  ): Promise<PublicLink> {
     return this.linksService.create(dto.url, user.id, ip);
   }
 }
